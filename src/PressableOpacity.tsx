@@ -1,6 +1,6 @@
-import React, { useCallback,useState, useEffect } from 'react';
+import React, { useCallback,useState } from 'react';
 import { PressableProps, Pressable, PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
-import {GestureResponderEvent} from "react-native/Libraries/Types/CoreEventTypes";
+import type {GestureResponderEvent} from "react-native/Libraries/Types/CoreEventTypes";
 
 
 export interface PressableOpacityProps extends PressableProps {
@@ -48,7 +48,7 @@ export function PressableOpacity({
 	const [isPressed, setIsPressed] = useState(false);
 	const onSafePress = (event: GestureResponderEvent) => {
 		if(isPressed) {
-			console.log("Pressed，ignore",multPressDelay);
+			console.log("已点击，忽略",multPressDelay);
 			return
 		};
 		setIsPressed(true);
