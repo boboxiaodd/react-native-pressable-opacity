@@ -48,7 +48,7 @@ export function PressableOpacity({
 	const [isPressed, setIsPressed] = useState(false);
 	const onSafePress = (event: GestureResponderEvent) => {
 		if(isPressed) {
-			console.log("已点击，忽略",multPressDelay);
+			console.log("Pressed，ignore",multPressDelay);
 			return
 		};
 		setIsPressed(true);
