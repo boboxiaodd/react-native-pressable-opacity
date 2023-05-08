@@ -34,6 +34,8 @@ export function PressableOpacity({
 	multPressDelay = 500,
 	...passThroughProps
 }: PressableOpacityProps): React.ReactElement {
+	let isPressed = false;
+	const [isDisabled, setIsDisabled] = useState(disabled);
 	const getOpacity = useCallback(
 		(pressed: boolean) => {
 			if (disabled) {
@@ -45,23 +47,28 @@ export function PressableOpacity({
 		},
 		[activeOpacity, disabled, disabledOpacity],
 	);
-	const [isPressed, setIsPressed] = useState(false);
 	const onSafePress = (event: GestureResponderEvent) => {
-		if(isPressed) {
-			console.log("已点击，忽略",multPressDelay);
-			return
-		};
-		setIsPressed(true);
+		if(multPressDelay > 0) {
+			if (isPressed) {
+				setIsDisabled(true);
+				console.log("已点击，忽略", multPressDelay);
+				return
+			}
+			isPressed = true;
+			setTimeout(() => {
+				try {
+					isPressed = false;
+					setIsDisabled(false);
+				} catch (e) {
+				}
+			}, multPressDelay);
+		}
 		passThroughProps.onPress && passThroughProps.onPress(event);
-		// @ts-ignore
-		setTimeout(() => {
-			try{setIsPressed(false);}catch(e){}
-		},multPressDelay);
 	}
 
 
 	const _style = useCallback<StyleType>(({ pressed }) => [style as ViewStyle, { opacity: getOpacity(pressed) }], [getOpacity, style]);
 
 
-	return <Pressable style={_style}  disabled={disabled} {...passThroughProps} onPress={(e) => onSafePress(e)} />;
+	return <Pressable style={_style}  disabled={isDisabled} {...passThroughProps} onPress={(e) => onSafePress(e)} />;
 }
