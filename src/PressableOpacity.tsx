@@ -1,7 +1,6 @@
-import React, { useCallback,useState } from 'react';
+import React, { useCallback } from 'react';
 import { PressableProps, Pressable, PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
-import type {GestureResponderEvent} from "react-native/Libraries/Types/CoreEventTypes";
-
+import _ from 'lodash-es';
 
 export interface PressableOpacityProps extends PressableProps {
 	/**
@@ -16,26 +15,26 @@ export interface PressableOpacityProps extends PressableProps {
 	 * @default 0.2
 	 */
 	activeOpacity?: number;
+
 	/**
-	 * The delay(ms) when mult press happend
+	 * The opacity to animate to when the user presses the button
 	 *
-	 * @default 500
+	 * @default 1000
 	 */
-	multPressDelay?: number;
+	timeout?: number;
 }
 
 export type StyleType = (state: PressableStateCallbackType) => StyleProp<ViewStyle>;
 
 export function PressableOpacity({
-	style,
-	disabled = false,
-	disabledOpacity = 0.3,
-	activeOpacity = 0.2,
-	multPressDelay = 500,
-	...passThroughProps
-}: PressableOpacityProps): React.ReactElement {
-	let isPressed = false;
-	const [isDisabled, setIsDisabled] = useState(disabled);
+									 onPress,
+									 style,
+									 disabled = false,
+									 disabledOpacity = 0.3,
+									 activeOpacity = 0.2,
+									 timeout = 1000,
+									 ...passThroughProps
+								 }: PressableOpacityProps): React.ReactElement {
 	const getOpacity = useCallback(
 		(pressed: boolean) => {
 			if (disabled) {
@@ -47,28 +46,12 @@ export function PressableOpacity({
 		},
 		[activeOpacity, disabled, disabledOpacity],
 	);
-	const onSafePress = (event: GestureResponderEvent) => {
-		if(multPressDelay > 0) {
-			if (isPressed) {
-				setIsDisabled(true);
-				console.log("已点击，忽略", multPressDelay);
-				return
-			}
-			isPressed = true;
-			setTimeout(() => {
-				try {
-					isPressed = false;
-					setIsDisabled(false);
-				} catch (e) {
-				}
-			}, multPressDelay);
-		}
-		passThroughProps.onPress && passThroughProps.onPress(event);
-	}
-
-
 	const _style = useCallback<StyleType>(({ pressed }) => [style as ViewStyle, { opacity: getOpacity(pressed) }], [getOpacity, style]);
-
-
-	return <Pressable style={_style}  disabled={isDisabled} {...passThroughProps} onPress={(e) => onSafePress(e)} />;
+	const checkPress = () => {
+		return _.throttle(onPress, timeout, {
+			leading: true,
+			trailing: false
+		});
+	}
+	return <Pressable hitSlop={10} style={_style} onPress={checkPress()} disabled={disabled} {...passThroughProps} />;
 }
