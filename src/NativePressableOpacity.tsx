@@ -12,6 +12,7 @@ import Reanimated, {
 	runOnJS,
 } from 'react-native-reanimated';
 import { PRESSABLE_IN_LIST_DELAY } from './Constants';
+import _ from 'lodash-es';
 
 export interface NativePressableOpacityProps extends ViewProps, WithTimingConfig {
 	children: React.ReactNode;
@@ -48,13 +49,20 @@ export interface NativePressableOpacityProps extends ViewProps, WithTimingConfig
 	 * Ref to the `GestureDetector`
 	 */
 	ref?: React.MutableRefObject<GestureType | undefined>
+
+	/**
+	 * The opacity to animate to when the user presses the button
+	 *
+	 * @default 1000
+	 */
+	timeout?: number;
 }
 
 /**
  * A Pressable that lowers opacity when pressed. Uses the native responder system from react-native-gesture-handler instead of the JS Pressability API.
  */
 export function NativePressableOpacity(props: NativePressableOpacityProps): React.ReactElement {
-	const { activeOpacity = 0.2, isInList, duration = 50, easing = Easing.linear, disabled = false, disabledOpacity = 0.3, ref, style, onPress, ...passThroughProps } = props;
+	const { activeOpacity = 0.2, isInList, timeout = 1000, duration = 50, easing = Easing.linear, disabled = false, disabledOpacity = 0.3, ref, style, onPress, ...passThroughProps } = props;
 
 	const isPressed = useSharedValue(false)
 	const timingConfig = useMemo<WithTimingConfig>(() => ({ duration, easing }), [duration, easing]);
@@ -82,13 +90,19 @@ export function NativePressableOpacity(props: NativePressableOpacityProps): Reac
 			isPressed.value = true
 		})
 		.onEnd(() => {
-			runOnJS(onPress)();
+			runOnJS(checkPress)();
 		})
 		.onFinalize(() => {
 			isPressed.value = false
 		}).enabled(!disabled).shouldCancelWhenOutside(true);
 	if (ref != null) {
 		tap = tap.withRef(ref)
+	}
+	const checkPress = () => {
+		return _.throttle(onPress, timeout, {
+			leading: true,
+			trailing: false
+		});
 	}
 
 	return (
