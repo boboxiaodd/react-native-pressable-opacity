@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { PressableProps, Pressable, PressableStateCallbackType, StyleProp, ViewStyle } from 'react-native';
-import _ from 'lodash-es';
 
 export interface PressableOpacityProps extends PressableProps {
 	/**
@@ -26,6 +25,21 @@ export interface PressableOpacityProps extends PressableProps {
 
 export type StyleType = (state: PressableStateCallbackType) => StyleProp<ViewStyle>;
 
+const preventDoublePress = {
+	lastPressTime: Date.now(),  //  上次点击时间
+	reponTime: 500,   //  间隔时间
+	onPress(callback: () => void) {
+		let curTime = Date.now();
+		if (curTime - this.lastPressTime > this.reponTime) {
+			this.lastPressTime = curTime;
+			this.reponTime = 500;  //  这里的时间和上面的匹配
+			callback();
+		}else{
+			console.log("无效点击",curTime - this.lastPressTime);
+		}
+	},
+};
+
 export function PressableOpacity({
 									 onPress,
 									 style,
@@ -48,10 +62,7 @@ export function PressableOpacity({
 	);
 	const _style = useCallback<StyleType>(({ pressed }) => [style as ViewStyle, { opacity: getOpacity(pressed) }], [getOpacity, style]);
 	const checkPress = () => {
-		return _.throttle(onPress, timeout, {
-			leading: true,
-			trailing: false
-		});
+		preventDoublePress.onPress(onPress);
 	}
-	return <Pressable hitSlop={10} style={_style} onPress={checkPress()} disabled={disabled} {...passThroughProps} />;
+	return <Pressable hitSlop={10} style={_style} onPress={checkPress} disabled={disabled} {...passThroughProps} />;
 }
